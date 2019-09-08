@@ -1,0 +1,252 @@
+---
+title: "Analysis Report"
+author: "Byron Kilian"
+#date: [] [11], [2018]
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+---
+
+```{r global_options, include=FALSE}
+#Added in this section to surpress unwanted output
+knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
+```
+
+
+## (1) Library used in the analysis
+
+> The library I used for creating the visuals is ggplot2 in R.
+
+```{r echo=FALSE, ImportPackage}
+#Import library
+library(ggplot2)
+```
+
+
+## (2) Data used in the analysis
+
+> After the gathering, assessing and cleaning phase of the project I created a 
+> master view in SQL of which the content I wrote to a csv file. This master file
+> was then read into R using the 'read.csv' command.
+
+```{r echo=FALSE, LoadData}
+# Load the dataset
+twitter_archive_master = read.csv('twitter_archive_master.csv')
+```
+
+
+## (3) Univariate Plots
+
+> For the investigation of the data I first start by viewing univariate plots to
+> get an understanding of the distribution for some of the variables.
+> The first variable I looked at was the histrogram for the favorite_count variable.
+
+```{r echo=FALSE, Histogram_favorite_count}
+ggplot(data = twitter_archive_master, mapping = aes(x = twitter_archive_master$favorite_count)) +
+  geom_histogram(bins = 200, color='black',fill='red') +
+  scale_x_continuous(breaks = seq(0,60000,2000)) +
+  coord_cartesian(xlim = c(0,60000)) +
+  xlab('favorite_count') +
+  ggtitle('Histogram for the distribution of variable favorite_count') + 
+  theme_dark()
+```
+
+> The distribution of this variable has a long tail towards the right and this is
+> usually a good sign to try converting the axis to log scale. After the conversion
+> the image below was produced.
+
+```{r echo=FALSE, Histogram_favorite_count_scale_log_10}
+ggplot(data = twitter_archive_master, mapping = aes(x = favorite_count)) +
+  geom_histogram(bins = 100, color='black', fill='red') +
+  geom_freqpoly(bins = 100, color='blue', size=1) +
+  geom_vline(aes(xintercept=mean(twitter_archive_master$favorite_count)),size=1,color='green') +  
+  geom_vline(aes(xintercept=median(twitter_archive_master$favorite_count)),size=1,color='orange') +    
+  scale_x_log10() +
+  xlab("log base 10 favorite_count") + 
+  ggtitle('Histogram for the distribution of variable favorite_count log base 10') +   
+  theme_dark()
+```
+
+> The blue freqpoly shows some up and down spark lines which indicates that this
+> is not a stable variable. The vertical green line presents the mean and the 
+> vertical orange line presents the median. Since the mean excedes median this distribution
+> is right skewed.
+> The second variable I looked at is the histogram for the retweet_count variable
+
+```{r echo=FALSE, Histogram_retweet_count}
+ggplot(data = twitter_archive_master, mapping = aes(x = twitter_archive_master$retweet_count)) +
+  geom_histogram(bins = 400, color='black', fill='red') +
+  scale_x_continuous(breaks = seq(0,20000,2000)) + 
+  coord_cartesian(xlim = c(0,20000)) +
+  xlab("retweet_count") + 
+  ggtitle('Histogram for the distribution of variable retweet_count') +     
+  theme_dark()
+```
+
+> The distribution for this variable also has a long tail towards the right.
+> To get a better feel for the distribution of this variable I converted the scale
+> of the axis to log.
+
+```{r echo=FALSE, Histogram_retweet_count_scale_log_10}
+ggplot(data = twitter_archive_master, mapping = aes(x = twitter_archive_master$retweet_count)) +
+  geom_histogram(bins = 100, color='black', fill='red') +
+  geom_freqpoly(bins = 100, color='blue',size=1) +
+  geom_vline(aes(xintercept=mean(twitter_archive_master$retweet_count)),size=1,color='green') +  
+  geom_vline(aes(xintercept=median(twitter_archive_master$retweet_count)),size=1,color='orange') +    
+  scale_x_log10() +
+  xlab("log base 10 retweet_count") + 
+  ggtitle('Histogram for the distribution of variable retweet_count log base 10') + 
+  theme_dark()
+```
+
+> The image produced seems more symmetric, but it is also a right skewed distribution
+> since the mean excedes the median. The blue freqpoly shows lots of spark lines
+> which indicate that this variable is also unstable.
+> The final univariate plot I looked at is the histogram for the optimal (best)
+> confidence rating for each tweet.
+
+```{r echo=FALSE, Histogram_confidencerating}
+ggplot(data = twitter_archive_master, mapping = aes(x = twitter_archive_master$confidencerating)) +
+  geom_histogram(bins = 100, color='black', fill='red') +
+  geom_vline(aes(xintercept = median(twitter_archive_master$confidencerating)),size=1,color='orange') +
+  scale_x_continuous(breaks = seq(0,1,0.1)) +
+  xlab("confidencerating") + 
+  ggtitle('Histogram for the distribution of variable confidencerating') +  
+  theme_dark()
+```
+
+> There seems to be a farely wide distribution of the confidence in the prediction
+> 'power' of the classification technique applied. The median predicted confidence comes
+> in at just under 60% while most of the observations had a confidence rating
+> of 98% and up.
+
+
+
+## (4) Bivariate Plots
+
+> Under this sections I consider bivariate plots to see if there are potentially
+> any other hidden insights by observing a combination of variables.
+> The visual below is a box plot of variable classification against confidence rating
+
+> The 'True' value presents the concept that the classification is of breed dog and
+> 'False' is not a breed of dog.
+> Interestingly the median confidence rating for the classification of identifying
+> a breed of dog is higher than the opposite.
+
+
+```{r echo=FALSE, Boxplot_classification_vs_confidencerating}
+ggplot(data = twitter_archive_master, mapping = aes(x=twitter_archive_master$classification,y=twitter_archive_master$confidencerating)) +
+  geom_boxplot(color='red', fill='black') +
+  scale_y_continuous(breaks = seq(0,1,0.1)) +
+  xlab("classification") + 
+  ylab("confidencerating") +
+  ggtitle('Boxplot of the confidencerating variable per classification') +  
+  theme_dark()
+```
+
+> The box plot below considers the categorical variable (dog stage) against the 
+> confidence rating.
+> The 'empty' bucket on the x axis present those observations who did not have
+> a dog stage.
+> Out of the dogs that did get a dog stage the median confidence rating for a puppo
+> is the highest (even though there weren't many observations for this category) 
+> and that of a floofer is the lowest (understandable since it had the lowest
+> representation within the dataset).
+
+```{r echo=FALSE, Boxplot_dogstage_vs_confidencerating}
+ggplot(data = twitter_archive_master, mapping = aes(x=twitter_archive_master$dogstage,y=twitter_archive_master$confidencerating)) +
+  geom_boxplot(color='red', fill='black') +
+  scale_y_continuous(breaks = seq(0,1,0.1)) +
+  xlab("Dogstage") + 
+  ylab("confidencerating") +
+  ggtitle('Boxplot of the confidencerating variable per dogstage') +    
+  theme_dark()
+```
+
+> The differnt hights in the box plot below was very interesting.
+> Regarless of the proportion of representation of the various categories within
+> the dataset the median favorite_count for categories: doggo, floofer and pupper
+> are very close, which seems that this could be the stage of a dogs life that
+> most people relate with.
+> The pupper has a few outliers as indicated by the red dots, and as expected
+> the pupper is a lot of hard work and very naughty. This is evident from the
+> fact that it received a lower median favorite_count.
+
+```{r echo=FALSE, Boxplot_dogstage_vs_favorite_count}
+ggplot(data = twitter_archive_master, mapping = aes(x=twitter_archive_master$dogstage,y=twitter_archive_master$favorite_count)) +
+  geom_boxplot(color='red',fill='black') +
+  scale_y_continuous(breaks = seq(0,20000,2000)) +
+  coord_cartesian(ylim = c(0,20500)) +
+  xlab("Dogstage") + 
+  ylab("favorite_count") +
+  ggtitle('Boxplot of the favorite_count variable per dogstage') +    
+  theme_dark()
+```
+
+> Similar to the box plot above the retweet_count shows similar patterns. The
+> variance observed is also very wide.
+
+```{r echo=FALSE, Boxplot_dogstage_vs_retweet_count}
+ggplot(data = twitter_archive_master, mapping = aes(x=twitter_archive_master$dogstage,y=twitter_archive_master$retweet_count)) +
+  geom_boxplot(color='red',fill='black') +
+  scale_y_continuous(breaks = seq(0,6000,500)) +
+  coord_cartesian(ylim = c(0,6000)) +
+  xlab("Dogstage") + 
+  ylab("retweet_count") +
+  ggtitle('Boxplot of the retweet_count variable per dogstage') +    
+  theme_dark()
+```
+
+> The scatter plot below shows the linear relationship between the favorite_count
+> and retweet_count variables. After performing a correlation test it came back with
+> a correlation coefficient of 85% which indicates that there is a strong positive
+> relationship between these two variables
+
+```{r echo=FALSE, Scatter_retweet_count_vs_favorite_count}
+ggplot(data = twitter_archive_master, mapping = aes(x=twitter_archive_master$retweet_count,y=twitter_archive_master$favorite_count)) +
+  geom_jitter(alpha = 0.1,color='red') +
+  geom_smooth(method ="lm",color='blue') +
+  scale_x_continuous(breaks = seq(0,80000,5000)) +
+  scale_y_continuous(breaks = seq(0,200000,5000)) + 
+  coord_cartesian(xlim = c(0,40000), ylim = c(0,80000)) +
+  xlab("retweet_count") + 
+  ylab("favorite_count") +
+  ggtitle('Scatter plot of the retweet_count variable VS favorite_count variable') +   
+  theme_dark()
+```
+
+```{r echo=FALSE, Cor_Test}
+cor.test(twitter_archive_master$retweet_count, twitter_archive_master$favorite_count, method = c("pearson"))
+```
+
+> The scatter plots below show that the relationship between the rating numerator
+> and favorite_count or retweet_count is not linear, but rather of a higher order
+> polynomial.
+> For the numerator between 10 and 14 the count variables shoot high up and for the 
+> lower numerator values the count variables are low aswell.
+
+```{r echo=FALSE, Scatter_rating_numerator_vs_favorite_count}
+ggplot(data = twitter_archive_master, mapping = aes(x=twitter_archive_master$rating_numerator,y=twitter_archive_master$favorite_count)) +
+  geom_jitter(alpha = 0.1,color='red') +
+  scale_x_continuous(breaks = seq(0,25,1)) +
+  scale_y_continuous(breaks = seq(0,80000,1000)) +
+  coord_cartesian(xlim = c(0,25), ylim = c(0,30000)) + 
+  xlab("rating_numerator") + 
+  ylab("favorite_count") +
+  ggtitle('Scatter plot of the rating_numerator variable VS favorite_count variable') +    
+  theme_dark()
+```
+
+```{r echo=FALSE, Scatter_rating_numerator_vs_retweet_count}
+ggplot(data = twitter_archive_master, mapping = aes(x=twitter_archive_master$rating_numerator,y=twitter_archive_master$retweet_count)) +
+  geom_jitter(alpha = 0.1,color='red') +
+  scale_x_continuous(breaks = seq(0,25,1)) +
+  scale_y_continuous(breaks = seq(0,30000,1000)) +  
+  coord_cartesian(xlim = c(0,25), ylim = c(0,30000)) +  
+  xlab("rating_numerator") + 
+  ylab("retweet_count") +
+  ggtitle('Scatter plot of the rating_numerator variable VS retweet_count variable') +    
+  theme_dark()
+```
